@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: int_valid_rental_listings
+    description: "Rental records approved for analytics."
+
+    columns:
+      - name: raw_record_id
+        data_tests:
+          - not_null
+          - unique
+
+      - name: weekly_rent
+        data_tests:
+          - not_null
+
+      - name: dq_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['VALID']
+
+  - name: int_rejected_rental_listings
+    description: "Rejected rental records retained for investigation."
+
+    columns:
+      - name: raw_record_id
+        data_tests:
+          - not_null
+
+      - name: dq_reason
+        data_tests:
+          - not_null
+
+      - name: dq_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['REJECTED']

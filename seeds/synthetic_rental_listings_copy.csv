@@ -1,0 +1,22 @@
+raw_record_id,source_listing_id,source_platform,suburb,weekly_rent,room_type,property_type,furnishing_status,bills_status,bathroom_type,bathroom_share_count,available_from,collected_at,ingested_at
+S001,SYN001,synthetic,Wollongong,280,private,apartment,fully_furnished,included,shared,2,2026-11-01,2026-10-09 09:00:00,2026-10-09 10:00:00
+S002,SYN002,synthetic,Wollongong,310,private,apartment,fully_furnished,excluded,private,1,2026-11-05,2026-10-09 09:00:00,2026-10-09 10:00:00
+S003,SYN003,synthetic,Wollongong,250,shared,house,partially_furnished,equally_divided,shared,3,2026-11-10,2026-10-09 09:00:00,2026-10-09 10:00:00
+S004,SYN004,synthetic,Wollongong,340,studio,apartment,fully_furnished,included,private,1,2026-11-15,2026-10-09 09:00:00,2026-10-09 10:00:00
+S005,SYN005,synthetic,Wollongong,270,private,house,unfurnished,excluded,shared,2,2026-11-20,2026-10-09 09:00:00,2026-10-09 10:00:00
+S006,SYN006,synthetic,Fairy Meadow,240,private,house,fully_furnished,equally_divided,shared,3,2026-11-01,2026-10-09 09:00:00,2026-10-09 10:00:00
+S007,SYN007,synthetic,Fairy Meadow,260,private,apartment,partially_furnished,included,shared,2,2026-11-05,2026-10-09 09:00:00,2026-10-09 10:00:00
+S008,SYN008,synthetic,Fairy Meadow,210,shared,house,fully_furnished,excluded,shared,4,2026-11-10,2026-10-09 09:00:00,2026-10-09 10:00:00
+S009,SYN009,synthetic,Fairy Meadow,290,private,apartment,fully_furnished,included,private,1,2026-11-15,2026-10-09 09:00:00,2026-10-09 10:00:00
+S010,SYN010,synthetic,Figtree,220,private,house,fully_furnished,equally_divided,shared,3,2026-11-01,2026-10-09 09:00:00,2026-10-09 10:00:00
+S011,SYN011,synthetic,Figtree,230,private,house,partially_furnished,excluded,shared,2,2026-11-05,2026-10-09 09:00:00,2026-10-09 10:00:00
+S012,SYN012,synthetic,Figtree,200,shared,house,unfurnished,equally_divided,shared,4,2026-11-10,2026-10-09 09:00:00,2026-10-09 10:00:00
+S013,SYN013,synthetic,Figtree,250,private,house,fully_furnished,included,private,1,2026-11-15,2026-10-09 09:00:00,2026-10-09 10:00:00
+S014,SYN014,synthetic,North Wollongong,320,private,apartment,fully_furnished,included,private,1,2026-11-01,2026-10-09 09:00:00,2026-10-09 10:00:00
+S015,SYN015,synthetic,North Wollongong,350,studio,apartment,fully_furnished,excluded,private,1,2026-11-05,2026-10-09 09:00:00,2026-10-09 10:00:00
+S016,SYN016,synthetic,North Wollongong,290,private,house,partially_furnished,equally_divided,shared,2,2026-11-10,2026-10-09 09:00:00,2026-10-09 10:00:00
+S017,SYN017,synthetic,North Wollongong,300,shared,apartment,fully_furnished,included,shared,2,2026-11-15,2026-10-09 09:00:00,2026-10-09 10:00:00
+S018,SYN018,synthetic,Gwynneville,260,private,house,fully_furnished,included,shared,2,2026-11-01,2026-10-09 09:00:00,2026-10-09 10:00:00
+S019,SYN019,synthetic,Gwynneville,240,shared,house,partially_furnished,excluded,shared,3,2026-11-05,2026-10-09 09:00:00,2026-10-09 10:00:00
+S020,SYN020,synthetic,Gwynneville,280,private,apartment,fully_furnished,included,private,1,2026-11-10,2026-10-09 09:00:00,2026-10-09 10:00:00
+S021,SYN001,synthetic,Wollongong,295,private,apartment,fully_furnished,included,shared,2,2026-11-01,2026-10-11 09:00:00,2026-10-11 10:00:00

@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: dim_suburbs
+    description: "Dimension containing unique suburbs."
+
+    columns:
+      - name: suburb_key
+        data_tests:
+          - not_null
+          - unique
+
+      - name: suburb_name
+        data_tests:
+          - not_null
+          - unique
+
+  - name: fct_rental_listings
+    description: "Latest valid state of each unique rental listing."
+
+    columns:
+      - name: listing_key
+        data_tests:
+          - not_null
+          - unique
+
+      - name: suburb_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_suburbs')
+                field: suburb_key
+
+      - name: weekly_rent
+        data_tests:
+          - not_null

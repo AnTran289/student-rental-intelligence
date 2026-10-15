@@ -1,0 +1,28 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Raw rental listing data ingested into Snowflake."
+    database: STUDENT_RENTAL_DB
+    schema: RAW
+
+    tables:
+      - name: rental_listings
+        identifier: RENTAL_LISTINGS
+        description: "Original rental listings before data cleaning."
+
+        columns:
+          - name: raw_record_id
+            description: "Unique identifier for each ingested raw record."
+            data_tests:
+              - not_null
+              - unique
+
+          - name: source_listing_id
+            description: "Listing identifier from the original source."
+
+          - name: weekly_rent
+            description: "Raw weekly rental price as received from the source."
+
+          - name: suburb
+            description: "Suburb of the rental property."

@@ -1,0 +1,138 @@
+version: 2
+
+models:
+  - name: agg_synthetic_rent_by_suburb
+    description: >
+      Provides rental market statistics by suburb
+      using the latest valid observation of each
+      unique rental listing.
+
+      Grain: One row per suburb.
+
+      Historical observations of the same listing
+      are excluded from current-price aggregation.
+
+      Data source: Synthetic rental listings.
+      Results do not represent actual market prices.
+
+    columns:
+      - name: suburb
+        description: >
+          Suburb used to group rental listings.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: total_listings
+        description: >
+          Number of unique rental listings
+          represented in this suburb.
+
+          Each listing contributes once after
+          deduplication.
+        data_tests:
+          - not_null
+
+      - name: avg_weekly_rent
+        description: >
+          Arithmetic mean of advertised weekly
+          rent in AUD for the suburb.
+        data_tests:
+          - not_null
+
+      - name: median_weekly_rent
+        description: >
+          Median advertised weekly rent in AUD.
+          Less sensitive to extreme values
+          than the arithmetic mean.
+        data_tests:
+          - not_null
+
+      - name: min_weekly_rent
+        description: >
+          Lowest advertised weekly rent in AUD
+          among included listings.
+
+      - name: max_weekly_rent
+        description: >
+          Highest advertised weekly rent in AUD
+          among included listings.
+  
+  - name: agg_synthetic_rent_by_suburb_room_type
+    description: >
+      Aggregates synthetic rental prices by
+      suburb and room type.
+
+      Grain: One row per unique combination
+      of suburb and room_type.
+
+      Uses the latest valid rental observations.
+
+    columns:
+      - name: suburb
+        description: >
+          Suburb of the rental listings.
+        data_tests:
+          - not_null
+
+      - name: room_type
+        description: >
+          Type of rental accommodation,
+          such as private, shared, or studio.
+        data_tests:
+          - not_null
+
+      - name: total_listings
+        description: >
+          Number of unique listings within
+          this suburb and room type.
+        data_tests:
+          - not_null
+
+      - name: avg_weekly_rent
+        description: >
+          Average weekly rental price in AUD
+          for this suburb and room type.
+
+      - name: median_weekly_rent
+        description: >
+          Median weekly rental price in AUD
+          for this suburb and room type.
+        
+  - name: agg_synthetic_rent_distribution
+    description: >
+      Aggregates synthetic rental listings
+      into weekly rental price bands
+      segmented by room type.
+
+      Grain: One row per unique combination
+      of price_band and room_type.
+
+      Each latest valid listing belongs
+      to exactly one price band.
+
+    columns:
+      - name: price_band
+        description: >
+          Weekly rental price category
+          assigned to each listing.
+        data_tests:
+          - not_null
+
+      - name: room_type
+        description: >
+          Rental accommodation category.
+        data_tests:
+          - not_null
+
+      - name: total_listings
+        description: >
+          Number of unique rental listings
+          within the price band and room type.
+        data_tests:
+          - not_null
+
+      - name: avg_weekly_rent
+        description: >
+          Average weekly rental price in AUD
+          within the price band and room type.

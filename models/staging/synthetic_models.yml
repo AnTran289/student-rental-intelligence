@@ -1,0 +1,108 @@
+version: 2
+
+models:
+  - name: stg_synthetic_rental_listings
+    description: >
+      Standardizes raw synthetic rental observations
+      by cleaning text fields and converting data
+      types.
+
+      Grain: One row per ingested raw observation.
+
+      This model preserves invalid observations
+      and historical listing updates for
+      downstream data quality validation.
+
+    columns:
+      - name: raw_record_id
+        description: >
+          Technical identifier assigned to each
+          ingested observation. May be null at
+          staging level due to source data issues.
+
+      - name: source_platform
+        description: >
+          Platform from which the rental listing
+          observation originated.
+
+      - name: source_listing_id
+        description: >
+          Listing identifier within its source
+          platform. May repeat across observations
+          when a listing is updated.
+
+      - name: weekly_rent
+        description: >
+          Advertised weekly rental price in AUD,
+          converted to NUMBER(10,2).
+          Invalid values may be null or non-positive.
+
+      - name: collected_at
+        description: >
+          Timestamp when the listing observation
+          was collected.
+
+      - name: ingested_at
+        description: >
+          Timestamp when the observation entered
+          the ingestion pipeline.
+      
+  - name: int_synthetic_valid_rental_listings
+    description: >
+      Retains synthetic rental observations that
+      satisfy required data quality rules.
+
+      Grain: One row per valid raw observation.
+
+      Required fields include raw_record_id,
+      source_platform, source_listing_id, suburb,
+      positive weekly_rent, and collected_at.
+
+      Multiple valid observations may exist for
+      the same rental listing.
+
+    columns:
+      - name: raw_record_id
+        description: >
+          Unique technical identifier of a
+          validated rental observation.
+
+      - name: dq_status
+        description: >
+          Data quality classification.
+          All records in this model must be VALID.
+
+  - name: int_synthetic_latest_rental_listings
+    description: >
+      Selects the latest valid observation for
+      each unique rental listing.
+
+      Grain: One row per
+      (source_platform, source_listing_id).
+
+      Deduplication uses collected_at descending,
+      followed by ingested_at and raw_record_id
+      as tie-breakers.
+
+      A newer rejected observation does not
+      replace the latest valid observation.
+
+      This model does not guarantee that a
+      rental listing is currently active.
+
+    columns:
+      - name: source_platform
+        description: >
+          Source platform component of the
+          composite rental listing business key.
+
+      - name: source_listing_id
+        description: >
+          Source-specific identifier component
+          of the composite rental listing
+          business key.
+
+      - name: collected_at
+        description: >
+          Collection timestamp of the latest
+          valid observation selected.

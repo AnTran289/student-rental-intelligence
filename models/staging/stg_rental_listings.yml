@@ -1,0 +1,19 @@
+
+version: 2
+
+models:
+  - name: stg_rental_listings
+    description: "Standardized rental listings with data quality classification."
+
+    columns:
+      - name: raw_record_id
+        data_tests:
+          - not_null
+          - unique
+
+      - name: dq_status
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['VALID', 'REJECTED']

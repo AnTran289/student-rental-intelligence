@@ -1,0 +1,48 @@
+name: 'student_rental_intelligence'
+version: '1.0.0'
+config-version: 2
+
+profile: 'default'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  student_rental_intelligence:
+    staging:
+      +materialized: view
+
+    marts:
+      +materialized: table
+
+
+seeds:
+  student_rental_intelligence:
+    +schema: synthetic
+    +quote_columns: false
+    +column_types:
+      raw_record_id: varchar(50)
+      source_listing_id: varchar(100)
+      source_platform: varchar(100)
+      suburb: varchar(100)
+      weekly_rent: varchar(50)
+      room_type: varchar(50)
+      property_type: varchar(50)
+      furnishing_status: varchar(50)
+      bills_status: varchar(50)
+      bathroom_type: varchar(50)
+      bathroom_share_count: varchar(20)
+      available_from: varchar(100)
+      collected_at: timestamp_ntz
+      ingested_at: timestamp_ntz
+
