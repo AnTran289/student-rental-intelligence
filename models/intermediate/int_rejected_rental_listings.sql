@@ -1,3 +1,3 @@
 SELECT *
-FROM {{ ref('_listings') }}
+FROM {{ ref('stg_rental_listings') }}
 WHERE dq_status = 'REJECTED'
