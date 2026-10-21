@@ -1,3 +1,11 @@
+from datetime import datetime
+
+from ingestion.ingestion_validation import (
+    validate_ingestion_ids,
+    records_match,
+    normalize_collected_at,
+)
+
 def merge_rental_record(connection, record):
     # """
     # Insert a rental observation if RAW_RECORD_ID does not exist.
@@ -74,6 +82,7 @@ RAW_COLUMNS = [
 def build_record_params(record):
     """
     Return a tuple of values matching RAW_COLUMNS order.
+    Bind COLLECTED_AT datetimes as strings for TO_TIMESTAMP_NTZ.
     """
     # return (
     #     record["RAW_RECORD_ID"],
@@ -91,11 +100,22 @@ def build_record_params(record):
     #     record.get("COLLECTED_AT"),
     # )
 
-    return tuple(
-        record[column] if column == "RAW_RECORD_ID"
-        else record.get(column)
-        for column in RAW_COLUMNS
-    )
+    # return tuple(
+    #     record[column] if column == "RAW_RECORD_ID"
+    #     else record.get(column)
+    #     for column in RAW_COLUMNS
+    # )
+
+    # Normilize COLLECTED_AT when bind
+    params = []
+    for column in RAW_COLUMNS:
+        value = record[column] if column == "RAW_RECORD_ID" else record.get(column)
+        if column == "COLLECTED_AT" and isinstance(value, datetime):
+            if value.tzinfo is not None:
+                raise ValueError("COLLECTED_AT must be timezone-naive UTC")
+            value = value.isoformat(sep=" ", timespec="microseconds")
+        params.append(value)
+    return tuple(params)
 
 def build_source_expressions():
     """
@@ -163,3 +183,111 @@ def build_merge_sql():
         INSERT ({columns_sql})
         VALUES ({values_sql})
     """
+
+def fetch_existing_record(connection, raw_record_id):
+    columns_sql = ", ".join(RAW_COLUMNS)
+
+    sql = f"""
+        SELECT {columns_sql}
+        FROM STUDENT_RENTAL_DB.RAW.RENTAL_LISTINGS
+        WHERE RAW_RECORD_ID = %s
+    """
+
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(sql, (raw_record_id,))
+        row = cursor.fetchone()
+
+        if row is None:
+            return None
+
+        return dict(zip(RAW_COLUMNS, row))
+    finally:
+        cursor.close()
+
+def load_rental_batch(connection, records):
+    """
+    Load observations atomically.
+
+    New ID       -> INSERT
+    Same ID/data -> SKIP
+    Same ID/different data -> ERROR
+    """
+
+    validate_ingestion_ids(records)
+
+    # Validate and normalize timestamps before writing.
+    prepared_records = []
+
+    for record in records:
+        normalized = record.copy()
+
+        # Reject timezone-aware datetimes until explicitly
+        # define UTC conversion rules.
+        timestamp = normalize_collected_at(
+            normalized.get("COLLECTED_AT")
+        )
+
+        if timestamp.tzinfo is not None:
+            raise ValueError("COLLECTED_AT must be timezone-naive UTC")
+
+        normalized["COLLECTED_AT"] = timestamp
+        normalized["RAW_RECORD_ID"] = normalized["RAW_RECORD_ID"].strip()
+
+        prepared_records.append(normalized)
+
+    # Start an explicit Snowflake transaction.
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("BEGIN TRANSACTION")
+    finally:
+        cursor.close()
+
+    inserted = 0
+    skipped = 0
+
+    try:
+        cursor = connection.cursor()
+        try:
+            cursor.execute("BEGIN TRANSACTION")
+        finally:
+            cursor.close()
+
+        # Process records
+        for record in prepared_records:
+            existing = fetch_existing_record(
+                connection,
+                record["RAW_RECORD_ID"]
+            )
+
+            if existing is None:
+                # Insert a new observation
+                merge_rental_record(connection, record)
+                inserted += 1
+
+            else:
+                # Normalize existing Snowflake timestamp.
+                existing["COLLECTED_AT"] = normalize_collected_at(
+                    existing["COLLECTED_AT"]
+                )
+
+                if records_match(existing, record, RAW_COLUMNS):
+                    # Count exact duplicate as skipped
+                    skipped += 1
+                else:
+                    # Raise ValueError for conflicting ID
+                    raise ValueError(f"Conflicting data found for RAW_RECORD_ID: {record['RAW_RECORD_ID']}")
+
+
+        connection.commit()
+
+    except Exception:
+        connection.rollback()
+        raise
+
+    return {
+        "inserted": inserted,
+        "skipped": skipped,
+    }

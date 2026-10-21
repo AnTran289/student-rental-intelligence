@@ -1,0 +1,3 @@
+raw_record_id,source_listing_id,source_platform,suburb,weekly_rent,collected_at
+PIPE_001,PIPE_SYN_001,SYNTHETIC,Figtree,$290,2026-10-21 09:00:00
+PIPE_002,PIPE_SYN_002,SYNTHETIC,Keiraville,$320,2026-10-21 09:30:00

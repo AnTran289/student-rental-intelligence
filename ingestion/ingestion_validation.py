@@ -1,3 +1,5 @@
+from datetime import datetime
+
 def validate_ingestion_ids(records):
     """
     Validate RAW_RECORD_ID before loading into Snowflake.
@@ -26,3 +28,39 @@ def validate_ingestion_ids(records):
         # Add valid ID into seen_ids
         seen_ids.add(normalized_id)
     return True
+
+def records_match(existing_record, incoming_record, columns):
+    """
+    Return True if two observations contain
+    the same business data.
+    """
+    for column in columns:
+        # Get value from existing_record
+        existing_value = existing_record.get(column)
+
+        # Get value from imcoming_record
+        incoming_value = incoming_record.get(column)
+
+        # Return False if values differ
+        if existing_value != incoming_value:
+            return False
+
+    return True
+
+def normalize_collected_at(value):
+    """
+    Convert COLLECTED_AT into Python datetime.
+    Reject missing or invalid timestamp
+    """
+    if isinstance(value, datetime):
+        return value
+
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("COLLECTED_AT is missing or invalid")
+
+    try:
+        # Convert ISO-format string into datetime
+        return datetime.fromisoformat(value)
+    
+    except ValueError:
+        raise ValueError("Invalid COLLECTED_AT timestamp")
