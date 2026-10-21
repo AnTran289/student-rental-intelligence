@@ -29,7 +29,6 @@ REQUIRED_COLUMNS = [
     "collected_at",
 ]
 
-
 def run_ingestion(csv_path):
     logger.info("Starting rental ingestion: %s", csv_path)
 
