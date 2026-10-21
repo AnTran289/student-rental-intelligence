@@ -7,6 +7,13 @@ jobs:
   rental-pipeline:
     runs-on: ubuntu-latest
 
+    env:
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+      SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+      SNOWFLAKE_WAREHOUSE: COMPUTE_WH
+      SNOWFLAKE_DATABASE: STUDENT_RENTAL_DB
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,24 +30,32 @@ jobs:
 
       - name: Run Python ingestion
         env:
-          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
-          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
-          SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
           SNOWFLAKE_SCHEMA: RAW
           SNOWFLAKE_ROLE: STUDENT_RENTAL_INGEST
         run: |
           python run_ingestion.py --file data/ingestion_sample.csv
 
       - name: Configure dbt profile
-        env:
-          DBT_PROFILE_CONTENT: ${{ secrets.DBT_PROFILE_CONTENT }}
         run: |
           mkdir -p ~/.dbt
-          printf '%s' "$DBT_PROFILE_CONTENT" > ~/.dbt/profiles.yml
+          cat > ~/.dbt/profiles.yml <<'EOF'
+          default:
+            target: ci
+            outputs:
+              ci:
+                type: snowflake
+                account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+                user: "{{ env_var('SNOWFLAKE_USER') }}"
+                password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+                role: STUDENT_RENTAL_DBT
+                database: STUDENT_RENTAL_DB
+                warehouse: COMPUTE_WH
+                schema: DBT_CI
+                threads: 4
+          EOF
 
-      - name: Run dbt transformations
-        run: |
-          dbt debug
-          dbt build --select stg_rental_listings+
+      - name: Verify dbt connection
+        run: dbt debug
+
+      - name: Build rental analytics models
+        run: dbt build --select stg_rental_listings+
