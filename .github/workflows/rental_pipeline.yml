@@ -1,0 +1,46 @@
+name: Student Rental Pipeline
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rental-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Python ingestion
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+          SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+          SNOWFLAKE_SCHEMA: RAW
+          SNOWFLAKE_ROLE: STUDENT_RENTAL_INGEST
+        run: |
+          python run_ingestion.py --file data/ingestion_sample.csv
+
+      - name: Configure dbt profile
+        env:
+          DBT_PROFILE_CONTENT: ${{ secrets.DBT_PROFILE_CONTENT }}
+        run: |
+          mkdir -p ~/.dbt
+          printf '%s' "$DBT_PROFILE_CONTENT" > ~/.dbt/profiles.yml
+
+      - name: Run dbt transformations
+        run: |
+          dbt debug
+          dbt build --select stg_rental_listings+
