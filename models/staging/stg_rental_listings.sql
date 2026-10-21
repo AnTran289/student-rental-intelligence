@@ -57,7 +57,7 @@ classified AS (
 
         CASE
             WHEN source_platform IS NULL
-                THEN 'REJECTED'
+                THEN 'MISSING_SOURCE_PLATFORM'
             WHEN source_listing_id IS NULL
                 THEN 'MISSING_SOURCE_LISTING_ID'
             WHEN raw_record_id IS NULL
