@@ -237,17 +237,10 @@ def load_rental_batch(connection, records):
 
         prepared_records.append(normalized)
 
-    # Start an explicit Snowflake transaction.
-    cursor = connection.cursor()
-
-    try:
-        cursor.execute("BEGIN TRANSACTION")
-    finally:
-        cursor.close()
-
+    
     inserted = 0
     skipped = 0
-
+    # Start an explicit Snowflake transaction.
     try:
         cursor = connection.cursor()
         try:
