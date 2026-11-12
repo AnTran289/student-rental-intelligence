@@ -7,3 +7,7 @@ logs/
 __pycache__/
 .pytest_cache/
 .env
+.venv-dbt/
+.dbt-local/
+# Local database backups
+raw_rental_listings_backup.csv
