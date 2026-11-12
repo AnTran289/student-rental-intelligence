@@ -3,7 +3,7 @@ WITH source_data AS (
     FROM {{ source('raw', 'rental_listings') }}
 ),
 
-cleaned AS (
+normalized AS (
     SELECT
         raw_record_id,
         NULLIF(TRIM(source_listing_id), '')
@@ -13,10 +13,14 @@ cleaned AS (
 
         INITCAP(TRIM(suburb)) AS suburb,
 
-        TRY_TO_DECIMAL(
-            REGEXP_REPLACE(weekly_rent, '[^0-9.-]', ''),
-            10, 2
-        ) AS weekly_rent,
+        -- TRY_TO_DECIMAL(
+        --     REGEXP_REPLACE(weekly_rent, '[^0-9.-]', ''),
+        --     10, 2
+        -- ) AS weekly_rent,
+
+        REGEXP_REPLACE(
+            weekly_rent, '[^0-9.-]', '', 'g'
+        ) AS cleaned_rent,
 
         LOWER(TRIM(room_type)) AS room_type,
         LOWER(TRIM(property_type)) AS property_type,
@@ -24,9 +28,12 @@ cleaned AS (
         LOWER(TRIM(bills_status)) AS bills_status,
         LOWER(TRIM(bathroom_type)) AS bathroom_type,
 
-        TRY_TO_NUMBER(bathroom_share_count)
-            AS bathroom_share_count,
-        
+        -- TRY_TO_NUMBER(bathroom_share_count)
+        --     AS bathroom_share_count,
+
+        NULLIF(TRIM(bathroom_share_count), '')
+            AS raw_bathroom_share_count,
+
         collected_at,
         available_from,
         ingested_at
@@ -34,6 +41,32 @@ cleaned AS (
     FROM source_data
 ),
 
+cleaned AS (
+    SELECT
+        normalized.*,
+
+        CASE
+            WHEN cleaned_rent ~ '^-?[0-9]+(\.[0-9]{1,2})?$'
+                 AND LENGTH(
+                     SPLIT_PART(
+                         LTRIM(cleaned_rent, '-'),
+                         '.',
+                         1
+                     )
+                 ) <= 8
+            THEN cleaned_rent::NUMERIC(10,2)
+            ELSE NULL
+        END AS weekly_rent,
+
+        CASE
+            WHEN raw_bathroom_share_count ~ '^[0-9]+$'
+                 AND LENGTH(raw_bathroom_share_count) <= 9
+            THEN raw_bathroom_share_count::INT
+            ELSE NULL
+        END AS bathroom_share_count
+
+    FROM normalized
+),
 
 classified AS (
     SELECT
@@ -74,5 +107,21 @@ classified AS (
     FROM cleaned
 )
 
-SELECT *
+SELECT
+    raw_record_id,
+    source_listing_id,
+    source_platform,
+    suburb,
+    weekly_rent,
+    room_type,
+    property_type,
+    furnishing_status,
+    bills_status,
+    bathroom_type,
+    bathroom_share_count,
+    collected_at,
+    available_from,
+    ingested_at,
+    dq_status,
+    dq_reason
 FROM classified

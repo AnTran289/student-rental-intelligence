@@ -43,6 +43,6 @@ seeds:
       bathroom_type: varchar(50)
       bathroom_share_count: varchar(20)
       available_from: varchar(100)
-      collected_at: timestamp_ntz
-      ingested_at: timestamp_ntz
+      collected_at: timestamp
+      ingested_at: timestamp
 

@@ -1,33 +1,26 @@
 from datetime import datetime
 
+
 def validate_ingestion_ids(records):
-    """
-    Validate RAW_RECORD_ID before loading into Snowflake.
-
-    Raise ValueError if:
-    - RAW_RECORD_ID is missing or blank.
-    - RAW_RECORD_ID appears more than once in the batch.
-
-    Return True if all records are valid.
-    """
+    """Require a nonblank ID and check for duplicates after trimming."""
     seen_ids = set()
 
     for record in records:
-        raw_id = record.get("RAW_RECORD_ID")
+        if "RAW_RECORD_ID" in record and "raw_record_id" in record:
+            raise ValueError("Ambiguous RAW_RECORD_ID: multiple ID keys in record")
 
-        # Check missing / blank
-        if not isinstance(raw_id, str) or not raw_id.strip(): # Check if raw_id is not a string or is empty/whitespace
+        raw_id = record.get("RAW_RECORD_ID", record.get("raw_record_id"))
+        if not isinstance(raw_id, str) or not raw_id.strip():
             raise ValueError(f"RAW_RECORD_ID is missing or blank in record: {record}")
 
-        normalized_id = raw_id.strip()  # Normalize by stripping whitespace
-        
-        # Check duplicates using seen_ids
+        normalized_id = raw_id.strip()
         if normalized_id in seen_ids:
             raise ValueError(f"Duplicate RAW_RECORD_ID found: {normalized_id}")
-        
-        # Add valid ID into seen_ids
+
         seen_ids.add(normalized_id)
+
     return True
+
 
 def records_match(existing_record, incoming_record, columns):
     """
@@ -38,7 +31,7 @@ def records_match(existing_record, incoming_record, columns):
         # Get value from existing_record
         existing_value = existing_record.get(column)
 
-        # Get value from imcoming_record
+        # Get value from incoming_record
         incoming_value = incoming_record.get(column)
 
         # Return False if values differ
@@ -56,11 +49,11 @@ def normalize_collected_at(value):
         return value
 
     if not isinstance(value, str) or not value.strip():
-        raise ValueError("COLLECTED_AT is missing or invalid")
+        raise ValueError("collected_at is missing or invalid")
 
     try:
         # Convert ISO-format string into datetime
         return datetime.fromisoformat(value)
-    
+
     except ValueError:
         raise ValueError("Invalid COLLECTED_AT timestamp")
