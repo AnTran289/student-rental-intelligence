@@ -28,7 +28,18 @@ Both scheduler-managed runs targeted `student_rental_test_db` with build schemas
 
 - **Recorded results:** The table summarizes two local scheduler-managed runs. It is the repository’s evidence summary.
 - **Runtime evidence:** Task logs remain in the local Airflow log directory. The local Airflow metadata database retains the run states and four return XComs per run, including the resolved relations, dbt invocation ID, and final validation summary. The temporary dbt artifact directories were removed by the task after use.
-- **Separate checks:** The clean-stack rehearsal verified PostgreSQL bootstrap, Airflow initialization and imports, and dbt connectivity. It stopped before a DAG run. Hosted GitHub Actions and a full clean-clone DAG E2E remain unverified.
+- **Separate checks:** The earlier clean-stack rehearsal verified PostgreSQL bootstrap, Airflow initialization and imports, and dbt connectivity. The subsequent clean-clone runs below exercised the full DAG. Hosted GitHub Actions passed 43 Python unit tests on the same published revision.
+
+## Clean-clone E2E
+
+Cloned the published `docs/portfolio-readiness` branch at `ef598f42d7074daf808b6155f1d80969a3c3d09d`, built the Airflow image without cache, and initialized new PostgreSQL and Airflow metadata volumes under separate Compose projects, `sri-clean003-rental` and `sri-clean003-airflow`. A temporary scheduler override routed ingestion and dbt to the new `student_rental_test_db` and supplied the mixed-quality CSV fixture via a read-only bind mount.
+
+| Run ID | Ingestion | Classification | dbt invocation ID | Artifact directory name |
+|---|---|---|---|---|
+| `cleanclone_20261116_003_first` | 3 inserted, 0 skipped | 2 valid, 1 rejected | `9e503e78-4f78-48ef-92df-5dc87072148f` | `airflow-build-r0vle_n4` |
+| `cleanclone_20261116_003_replay` | 0 inserted, 3 skipped | 2 valid, 1 rejected | `443ebb78-f00a-428c-841d-496accd0ffda` | `airflow-build-fs8arp0z` |
+
+Both runs validated three CSV rows, passed all four tasks, and retained four return XComs. dbt built 12 models and 2 seeds and passed 44 tests per run in `dbt_cleanclone_20261116_003` and its `_synthetic` companion. Raw row count went from 0 to 3 and stayed at 3 on replay. The raw checksum (`e38a773de5f4abd062bc9dc987a49dc7`) was unchanged across replay, each observation appeared in exactly one quality branch, and the existing development and test databases matched their pre-test baselines.
 
 ## Isolated local runs
 

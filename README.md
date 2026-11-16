@@ -106,16 +106,16 @@ python -m pytest -q \
 
 **Locally verified:** 43 Python unit tests passed on Python 3.12, and one PostgreSQL integration test passed against a separate test database. The [unit CI workflow](.github/workflows/rental_pipeline.yml) runs the six suites above. Hosted GitHub Actions CI was verified on both the portfolio branch push and Pull Request #3: all 43 Python unit tests passed on Python 3.12. See the [push run](https://github.com/AnTran289/student-rental-intelligence/actions/runs/43787491780) and [PR run](https://github.com/AnTran289/student-rental-intelligence/actions/runs/43787952964).
 
-| Scheduler-managed test run | Inserted | Skipped | Valid | Rejected | dbt |
+| Clean-clone scheduler-managed run | Inserted | Skipped | Valid | Rejected | dbt |
 |---|---:|---:|---:|---:|---|
 | Fresh batch | 3 | 0 | 2 | 1 | 12 models, 2 seeds, 44 tests passed |
 | Replay | 0 | 3 | 2 | 1 | 12 models, 2 seeds, 44 tests passed |
 
-All four Airflow tasks passed in each run, for **eight successful task executions**. The runs used persisted upstream XComs and separate current-run dbt artifacts. See the [run identifiers and checks](docs/architecture.md#local-verification-evidence) and [host CLI and integration commands](docs/architecture.md#host-ingestion-and-integration-test).
+All four Airflow tasks passed in each run, for **eight successful task executions**. The runs used an isolated Docker stack, persisted upstream XComs, and separate current-run dbt artifacts. See the [clean-clone run identifiers and checks](docs/architecture.md#clean-clone-e2e) and [host CLI and integration commands](docs/architecture.md#host-ingestion-and-integration-test).
 
 ## Limitations
 
 - The educational sample is too small for representative market research or live availability inference.
 - Synthetic analytics use their own seed data. They do not derive from actual rental observations.
-- Deployment is local Docker. Fresh-stack bootstrap, DAG discovery, and dbt connectivity were verified separately from the full DAG E2E runs. A full clean-clone DAG E2E is still unverified.
+- The full clean-clone DAG runs were verified on local Docker. Hosted CI covers Python unit tests. Hosted Airflow integration remains unverified.
 - Sequential replay is verified. Concurrent writers and automatic task retry recovery remain untested.
