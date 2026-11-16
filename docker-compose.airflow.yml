@@ -87,7 +87,7 @@ services:
     <<: *airflow-common
     command: api-server
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:${AIRFLOW_WEB_PORT:-8080}:8080"
 
   airflow-scheduler:
     <<: *airflow-common
@@ -112,4 +112,4 @@ volumes:
 networks:
   rental_network:
     external: true
-    name: student-rental-intelligence_default
+    name: ${RENTAL_NETWORK_NAME:-student-rental-intelligence_default}

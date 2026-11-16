@@ -11,10 +11,10 @@ from ingestion.postgres_loader import load_rental_batch
 @pytest.fixture
 def connection():
     conn = psycopg.connect(
-        host="127.0.0.1",
-        port=5433,
+        host=os.getenv("POSTGRES_HOST", "127.0.0.1"),
+        port=int(os.getenv("POSTGRES_PORT", "5433")),
         dbname="student_rental_test_db",
-        user="rental_admin",
+        user=os.getenv("POSTGRES_USER", "rental_admin"),
         password=os.environ["POSTGRES_PASSWORD"],
     )
 
