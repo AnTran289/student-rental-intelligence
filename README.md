@@ -11,6 +11,14 @@ An end-to-end data engineering portfolio project for historical advertised price
 - **Apache Airflow 3 orchestration.** Four tasks validate the CSV, ingest it, run dbt, and reconcile the batch against the current build’s outputs.
 - **Automated Python unit tests.** GitHub Actions is configured to run six suites on pushes and pull requests without external services or credentials.
 
+## Development history: Snowflake to PostgreSQL
+
+The project was initially developed with Snowflake and dbt to practise cloud data warehousing, SQL transformations, dimensional modelling, and data quality testing.
+
+When the Snowflake trial ended, the rental observations were backed up and the project moved to PostgreSQL 17 in Docker. This involved adapting dbt connection settings and SQL transformations, then validating the local PostgreSQL pipeline. The switch keeps this educational MVP cost-effective and reproducible without an active cloud subscription.
+
+Snowflake is part of the development history, **not** the current runtime architecture or a requirement for running the project.
+
 ## Architecture
 
 ```mermaid
@@ -96,7 +104,7 @@ python -m pytest -q \
   tests/test_ingestion_validation.py tests/test_validate_csv.py tests/test_pipeline_validation.py
 ```
 
-**Locally verified:** 43 Python unit tests passed on Python 3.12, and one PostgreSQL integration test passed against a separate test database. The [unit CI workflow](.github/workflows/rental_pipeline.yml) runs the six suites above. A hosted run of this workflow has yet to be verified.
+**Locally verified:** 43 Python unit tests passed on Python 3.12, and one PostgreSQL integration test passed against a separate test database. The [unit CI workflow](.github/workflows/rental_pipeline.yml) runs the six suites above. Hosted GitHub Actions CI was verified on both the portfolio branch push and Pull Request #3: all 43 Python unit tests passed on Python 3.12. See the [push run](https://github.com/AnTran289/student-rental-intelligence/actions/runs/43787491780) and [PR run](https://github.com/AnTran289/student-rental-intelligence/actions/runs/43787952964).
 
 | Scheduler-managed test run | Inserted | Skipped | Valid | Rejected | dbt |
 |---|---:|---:|---:|---:|---|
