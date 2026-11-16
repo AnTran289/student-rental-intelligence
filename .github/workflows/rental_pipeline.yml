@@ -1,61 +1,30 @@
-name: Student Rental Pipeline
+name: Python unit tests
 
 on:
-  workflow_dispatch:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
 
 jobs:
-  rental-pipeline:
+  unit-tests:
     runs-on: ubuntu-latest
-
-    env:
-      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-      SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
-      SNOWFLAKE_WAREHOUSE: COMPUTE_WH
-      SNOWFLAKE_DATABASE: STUDENT_RENTAL_DB
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
         with:
-          python-version: "3.12"
-
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run Python ingestion
-        env:
-          SNOWFLAKE_SCHEMA: RAW
-          SNOWFLAKE_ROLE: STUDENT_RENTAL_INGEST
-        run: |
-          python run_ingestion.py --file data/ingestion_sample.csv
-
-      - name: Configure dbt profile
-        run: |
-          mkdir -p ~/.dbt
-          cat > ~/.dbt/profiles.yml <<'EOF'
-          default:
-            target: ci
-            outputs:
-              ci:
-                type: snowflake
-                account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
-                user: "{{ env_var('SNOWFLAKE_USER') }}"
-                password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
-                role: STUDENT_RENTAL_DBT
-                database: STUDENT_RENTAL_DB
-                warehouse: COMPUTE_WH
-                schema: DBT_CI
-                threads: 4
-          EOF
-
-      - name: Verify dbt connection
-        run: dbt debug
-
-      - name: Build rental analytics models
-        run: dbt build --select stg_rental_listings+
+        run: python -m pip install -r requirements.txt
+      - name: Run isolated unit tests
+        run: >-
+          python -m pytest -q
+          tests/test_csv_reader.py
+          tests/test_validators.py
+          tests/test_record_preparation.py
+          tests/test_ingestion_validation.py
+          tests/test_validate_csv.py
+          tests/test_pipeline_validation.py
