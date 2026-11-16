@@ -15,5 +15,6 @@ __pycache__/
 raw_rental_listings_backup.csv
 # Airflow
 airflow/logs/
+/airflow-build-debug*.log
 airflow/__pycache__/
 airflow/config/simple_auth_manager_passwords.json.generated
