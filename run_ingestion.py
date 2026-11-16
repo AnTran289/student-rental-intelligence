@@ -2,7 +2,7 @@ import argparse
 import logging
 
 from ingestion.csv_reader import read_rental_csv
-from ingestion.record_preparation import prepare_postgres_records
+from ingestion.record_preparation import prepare_records
 from ingestion.ingestion_validation import validate_ingestion_ids
 from ingestion.postgres_connection import get_postgres_connection
 from ingestion.postgres_loader import load_rental_batch
@@ -26,7 +26,7 @@ REQUIRED_COLUMNS = [
 ]
 
 
-def run_ingestion(csv_path):
+def run_ingestion(csv_path, *, include_batch_metadata=False):
     logger.info("Starting rental ingestion: %s", csv_path)
 
     # 1. Read and validate CSV schema
@@ -34,7 +34,7 @@ def run_ingestion(csv_path):
     logger.info("Read %d records", len(records))
 
     # 2. Normalize dictionary keys
-    prepared_records = prepare_postgres_records(records)
+    prepared_records = prepare_records(records)
 
     # 3. Validate observation IDs
     validate_ingestion_ids(prepared_records)
@@ -42,13 +42,23 @@ def run_ingestion(csv_path):
     # 4. Skip database connection for empty files
     if not prepared_records:
         logger.info("No records to ingest")
-        return {"inserted": 0, "skipped": 0}
+        result = {"inserted": 0, "skipped": 0}
+        if include_batch_metadata:
+            result["raw_record_ids"] = []
+        return result
 
     # 5. Load into PostgreSQL
     connection = get_postgres_connection()
 
     try:
         result = load_rental_batch(connection, prepared_records)
+        if include_batch_metadata:
+            result.update(
+                raw_record_ids=[record["raw_record_id"].strip() for record in prepared_records],
+                database=connection.info.dbname,
+                host=connection.info.host,
+                port=connection.info.port,
+            )
     finally:
         connection.close()
 

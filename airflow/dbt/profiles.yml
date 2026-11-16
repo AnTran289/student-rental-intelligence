@@ -1,0 +1,12 @@
+default:
+  target: local
+  outputs:
+    local:
+      type: postgres
+      host: "{{ env_var('RENTAL_DB_HOST') }}"
+      port: "{{ env_var('RENTAL_DB_PORT') | int }}"
+      user: "{{ env_var('RENTAL_DB_USER') }}"
+      password: "{{ env_var('RENTAL_DB_PASSWORD') }}"
+      dbname: "{{ env_var('RENTAL_DB_NAME') }}"
+      schema: dbt_dev
+      threads: 2

@@ -1,0 +1,22 @@
+FROM apache/airflow:3.1.8
+
+USER root
+
+RUN mkdir -p /opt/dbt-venv \
+    && chown -R airflow:0 /opt/dbt-venv
+
+USER airflow
+
+COPY --chown=airflow:0 requirements-airflow.txt /tmp/requirements-airflow.txt
+COPY --chown=airflow:0 requirements-dbt.txt /tmp/requirements-dbt.txt
+
+# Install ingestion driver in Airflow's Python environment
+RUN pip install --no-cache-dir \
+    -r /tmp/requirements-airflow.txt \
+    && pip check
+
+# Create an isolated Python environment for dbt
+RUN python -m venv /opt/dbt-venv \
+    && /opt/dbt-venv/bin/python -m pip install --no-cache-dir \
+       -r /tmp/requirements-dbt.txt \
+    && /opt/dbt-venv/bin/python -m pip check

@@ -1,4 +1,2 @@
-snowflake-connector-python
-python-dotenv
-pytest
-dbt-snowflake
+-r requirements-airflow.txt
+pytest==9.1.1

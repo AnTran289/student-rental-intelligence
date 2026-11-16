@@ -1,21 +1,41 @@
-def _normalize_record_keys(records, normalize_key):
-    prepared_records = []
-    for record in records:
-        normalized = {}
-        for key, value in record.items():
-            normalized_key = normalize_key(key)
-            if normalized_key in ("RAW_RECORD_ID", "raw_record_id") and normalized_key in normalized:
-                raise ValueError("Ambiguous RAW_RECORD_ID: multiple ID keys in record")
-            normalized[normalized_key] = value
-        prepared_records.append(normalized)
-    return prepared_records
+# def prepare_records(records):
+#     """
+#     Transform CSV dictionaries into records that
+#     are ready to be mapped into Snowflake raw table.
+#     """
+
+    # new_records = []
+    # for record in records:
+    #     new_record = {
+    #         key.upper(): value
+    #         for key, value in record.items()
+    #     }
+    #     new_records.append(new_record)
+    # return new_records
 
 
+    # List comprehension version of the above for loop
+    # return [
+    #     {key.upper(): value for key, value in record.items()} for record in records
+    # ]
+
+# Postgres
 def prepare_records(records):
-    """Return records with uppercase keys for Snowflake."""
-    return _normalize_record_keys(records, str.upper)
+    """
+    Normalize CSV record keys for PostgreSQL loading.
+    """
+    return [
+        {key.lower(): value for key, value in record.items()}
+        for record in records
+    ]
 
+# records = [
+#     {"RAW_RECORD_ID": "L001", "WEEKLY_RENT": "$290"},
+#     {"RAW_RECORD_ID": "L002", "WEEKLY_RENT": "$250"}
+# ]
 
-def prepare_postgres_records(records):
-    """Return records with lowercase keys for PostgreSQL."""
-    return _normalize_record_keys(records, str.lower)
+# # result = prepare_records(records)
+
+# # print(result)
+# # print("Input count:", len(records))
+# # print("Output count:", len(result))
