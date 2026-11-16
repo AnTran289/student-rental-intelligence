@@ -18,6 +18,15 @@ def read_rental_csv(file_path, required_columns):
         # If file is empty (no header included), fieldnames will be None
         actual_headers = reader.fieldnames if reader.fieldnames is not None else []
 
+        seen_headers = {}
+        for header in actual_headers:
+            normalized = header.strip().lower()
+            if normalized in seen_headers:
+                raise ValueError(
+                    f"Ambiguous CSV headers: {seen_headers[normalized]!r} and {header!r}"
+                )
+            seen_headers[normalized] = header
+
         # Call validate_schema() to check headers
         validation_result = validate_schema(actual_headers, required_columns)
 

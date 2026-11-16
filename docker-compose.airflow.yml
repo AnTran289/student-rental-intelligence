@@ -1,0 +1,115 @@
+name: student-rental-airflow
+
+x-airflow-common: &airflow-common
+  # image: apache/airflow:3.1.8
+  image: student-rental-airflow:dev
+  restart: unless-stopped
+  depends_on:
+    airflow-postgres:
+      condition: service_healthy
+    airflow-init:
+      condition: service_completed_successfully
+  environment: &airflow-environment
+    PYTHONPATH: /opt/airflow/student-rental
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@airflow-postgres:5432/airflow_metadata
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET}
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-api-server:8080/execution/
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.api_fastapi.auth.managers.simple.simple_auth_manager.SimpleAuthManager
+    AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_USERS: admin:admin
+    AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE: /opt/airflow/config/simple_auth_manager_passwords.json.generated
+    AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
+    AIRFLOW__CORE__INTERNAL_API_SECRET_KEY: ${AIRFLOW_INTERNAL_API_SECRET_KEY}
+    AIRFLOW__CORE__PARALLELISM: 2
+    RENTAL_DB_USER: &rental-db-user ${POSTGRES_USER}
+    RENTAL_DB_PASSWORD: &rental-db-password ${POSTGRES_PASSWORD}
+    RENTAL_DB_HOST: &rental-db-host student-rental-postgres
+    RENTAL_DB_PORT: &rental-db-port "5432"
+    RENTAL_DB_NAME: &rental-db-name student_rental_db
+    POSTGRES_USER: *rental-db-user
+    POSTGRES_PASSWORD: *rental-db-password
+    POSTGRES_HOST: *rental-db-host
+    POSTGRES_PORT: *rental-db-port
+    POSTGRES_DB: *rental-db-name
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - ./airflow/logs:/opt/airflow/logs
+    - ./airflow/config:/opt/airflow/config
+    - ./:/opt/airflow/student-rental:ro
+
+services:
+  airflow-postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${AIRFLOW_DB_USER}
+      POSTGRES_PASSWORD: ${AIRFLOW_DB_PASSWORD}
+      POSTGRES_DB: airflow_metadata
+    volumes:
+      - airflow_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  airflow-init:
+    image: apache/airflow:3.1.8
+    depends_on:
+      airflow-postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@airflow-postgres:5432/airflow_metadata
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    command: ["airflow", "db", "migrate"]
+    restart: "no"
+
+  # airflow-api-server:
+  #   image: apache/airflow:3.1.8
+  #   restart: unless-stopped
+  #   depends_on:
+  #     airflow-postgres:
+  #       condition: service_healthy
+  #     airflow-init:
+  #       condition: service_completed_successfully
+  #   environment:
+  #     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@airflow-postgres:5432/airflow_metadata
+  #     AIRFLOW__CORE__EXECUTOR: LocalExecutor
+  #     AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET}
+  #   ports:
+  #     - "127.0.0.1:8080:8080"
+  #   volumes:
+  #     - ./airflow/dags:/opt/airflow/dags
+  #     - ./airflow/logs:/opt/airflow/logs
+  #   command: api-server
+
+  airflow-api-server:
+    <<: *airflow-common
+    command: api-server
+    ports:
+      - "127.0.0.1:8080:8080"
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    environment:
+      <<: *airflow-environment
+      DBT_PROJECT_DIR: /opt/airflow/student-rental
+      DBT_PROFILES_DIR: /opt/airflow/student-rental/airflow/dbt
+      DBT_TARGET_PATH: /opt/airflow/logs/dbt/target
+      DBT_LOG_PATH: /opt/airflow/logs/dbt/logs
+    networks:
+      - default
+      - rental_network
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    command: dag-processor
+
+volumes:
+  airflow_postgres_data:
+
+networks:
+  rental_network:
+    external: true
+    name: student-rental-intelligence_default

@@ -7,7 +7,13 @@ logs/
 __pycache__/
 .pytest_cache/
 .env
+.env.*
+!.env.example
 .venv-dbt/
 .dbt-local/
 # Local database backups
 raw_rental_listings_backup.csv
+# Airflow
+airflow/logs/
+airflow/__pycache__/
+airflow/config/simple_auth_manager_passwords.json.generated
